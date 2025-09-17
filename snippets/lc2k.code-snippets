@@ -3,64 +3,154 @@
     "prefix": "add",
     "body": [
       "${1:label}\\tadd\\t${2:regA}\\t${3:regB}\\t${4:destReg}\\t# ${5:dest = regA + regB}"
-    ]
+    ],
+    "description": "R-type add instruction"
   },
   "nor": {
     "prefix": "nor",
     "body": [
       "${1:label}\\tnor\\t${2:regA}\\t${3:regB}\\t${4:destReg}\\t# dest = ~(regA | regB)"
-    ]
+    ],
+    "description": "R-type nor instruction"
   },
   "lw": {
     "prefix": "lw",
     "body": [
       "${1:label}\\tlw\\t${2:regA}\\t${3:regB}\\t${4:offsetOrLabel}\\t# regB = M[regA + off]"
-    ]
+    ],
+    "description": "I-type load word instruction"
   },
   "sw": {
     "prefix": "sw",
     "body": [
       "${1:label}\\tsw\\t${2:regA}\\t${3:regB}\\t${4:offsetOrLabel}\\t# M[regA + off] = regB"
-    ]
+    ],
+    "description": "I-type store word instruction"
   },
   "beq": {
     "prefix": "beq",
     "body": [
       "${1:label}\\tbeq\\t${2:regA}\\t${3:regB}\\t${4:offsetOrLabel}\\t# if regA == regB jump"
-    ]
+    ],
+    "description": "I-type branch if equal instruction"
   },
   "jalr": {
     "prefix": "jalr",
     "body": [
-      "${1:label}\\tjalr\\t${2:regA}\\t${3:regB}"
-    ]
+      "${1:label}\\tjalr\\t${2:regA}\\t${3:regB}\\t\\t\\t# regB = PC+1, PC = regA"
+    ],
+    "description": "J-type jump and link register instruction"
   },
   "halt": {
     "prefix": "halt",
     "body": [
-      "${1:label}\\thalt"
-    ]
+      "${1:label}\\thalt\\t\\t\\t\\t\\t\\t# stop execution"
+    ],
+    "description": "O-type halt instruction"
   },
   "noop": {
     "prefix": "noop",
     "body": [
-      "${1:label}\\tnoop"
-    ]
+      "${1:label}\\tnoop\\t\\t\\t\\t\\t\\t# no operation"
+    ],
+    "description": "O-type no operation instruction"
   },
   ".fill number": {
     "prefix": ".fill",
     "body": [
-      "${1:label}\\t.fill\\t${2:valueOrLabel}"
-    ]
+      "${1:label}\\t.fill\\t${2:valueOrLabel}\\t\\t\\t# data: ${3:description}"
+    ],
+    "description": "Fill directive for data"
   },
   "loop template": {
     "prefix": "loop",
     "body": [
       "${1:start}\\tadd\\t0\\t0\\t${2:rTmp}\\t# rTmp = 0",
-      "\\tbeq\\t${3:rCondA}\\t${4:rCondB}\\t${5:end}",
-      "\\t# body",
-      "\\tbeq\\t0\\t0\\t${1:start}",
-      "${5:end}\\thalt"
-    ]
+      "\\tbeq\\t${3:rCondA}\\t${4:rCondB}\\t${5:end}\\t# exit condition",
+      "\\t# loop body here",
+      "\\tbeq\\t0\\t0\\t${1:start}\\t# unconditional jump back",
+      "${5:end}\\thalt\\t\\t\\t\\t\\t\\t# end of program"
+    ],
+    "description": "Basic loop template"
+  },
+  "function template": {
+    "prefix": "func",
+    "body": [
+      "${1:funcName}\\tadd\\t0\\t0\\t${2:rTemp}\\t# function ${1:funcName}",
+      "\\t# save registers if needed",
+      "\\t# function body here",
+      "\\t# restore registers if needed",
+      "\\tjalr\\t${3:rReturn}\\t0\\t\\t# return to caller"
+    ],
+    "description": "Function template with call/return pattern"
+  },
+  "multiplication template": {
+    "prefix": "mult",
+    "body": [
+      "\\tlw\\t0\\t1\\tmcand\\t\\t# load multiplicand",
+      "\\tlw\\t0\\t2\\tmplier\\t\\t# load multiplier",
+      "\\tadd\\t0\\t0\\t3\\t\\t# result = 0",
+      "${1:loop}\\tbeq\\t0\\t2\\t${2:done}\\t\\t# if multiplier == 0, done",
+      "\\tadd\\t3\\t1\\t3\\t\\t# result += multiplicand",
+      "\\tadd\\t2\\t${3:neg1}\\t2\\t\\t# multiplier--",
+      "\\tbeq\\t0\\t0\\t${1:loop}\\t\\t# repeat",
+      "${2:done}\\thalt\\t\\t\\t\\t\\t\\t# result in register 3",
+      "mcand\\t.fill\\t${4:15}\\t\\t\\t\\t# multiplicand value",
+      "mplier\\t.fill\\t${5:6}\\t\\t\\t\\t# multiplier value",
+      "${3:neg1}\\t.fill\\t-1\\t\\t\\t\\t# constant -1"
+    ],
+    "description": "Multiplication algorithm template"
+  },
+  "header comment": {
+    "prefix": "header",
+    "body": [
+      "# LC-2K Assembly Program",
+      "# Author: ${1:Your Name}",
+      "# Date: ${2:$CURRENT_DATE}",
+      "# Description: ${3:Program description}",
+      "# Registers used:",
+      "#   R0: always 0",
+      "#   R1: ${4:register 1 usage}",
+      "#   R2: ${5:register 2 usage}",
+      "#   R3: ${6:register 3 usage}",
+      "",
+      "${7:start}\\t${0}"
+    ],
+    "description": "Program header with documentation"
+  },
+  "data section": {
+    "prefix": "data",
+    "body": [
+      "# Data Section",
+      "${1:var1}\\t.fill\\t${2:0}\\t\\t\\t\\t# ${3:description}",
+      "${4:var2}\\t.fill\\t${5:1}\\t\\t\\t\\t# ${6:description}",
+      "${0}"
+    ],
+    "description": "Data section template"
+  },
+  "register move": {
+    "prefix": "mov",
+    "body": [
+      "${1:label}\\tadd\\t${2:srcReg}\\t0\\t${3:destReg}\\t# move ${2:srcReg} to ${3:destReg}"
+    ],
+    "description": "Move register contents (using add with 0)"
+  },
+  "load immediate": {
+    "prefix": "li",
+    "body": [
+      "${1:label}\\tlw\\t0\\t${2:destReg}\\t${3:valueLabel}\\t# load immediate ${3:valueLabel}"
+    ],
+    "description": "Load immediate value from memory"
+  },
+  "conditional branch": {
+    "prefix": "if",
+    "body": [
+      "\\tbeq\\t${1:regA}\\t${2:regB}\\t${3:thenLabel}\\t# if ${1:regA} == ${2:regB}",
+      "\\t# else case here",
+      "\\tbeq\\t0\\t0\\t${4:endLabel}\\t\\t# skip then case",
+      "${3:thenLabel}\\t# then case here",
+      "${4:endLabel}\\t${0}"
+    ],
+    "description": "If-then-else conditional structure"
   }
 }

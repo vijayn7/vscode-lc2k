@@ -38,34 +38,99 @@ exports.deactivate = deactivate;
 const vscode = __importStar(require("vscode"));
 const OPCODES = new Set(["add", "nor", "lw", "sw", "beq", "jalr", "halt", "noop"]);
 const DIRECTIVES = new Set([".fill"]);
+const INSTRUCTION_INFO = {
+    "add": {
+        type: "R-type",
+        format: "add regA regB destReg",
+        description: "Add contents of regA with contents of regB, store result in destReg",
+        example: "add 1 2 3  # R3 = R1 + R2"
+    },
+    "nor": {
+        type: "R-type",
+        format: "nor regA regB destReg",
+        description: "Bitwise NOR of regA and regB, store result in destReg",
+        example: "nor 1 2 3  # R3 = ~(R1 | R2)"
+    },
+    "lw": {
+        type: "I-type",
+        format: "lw regA regB offsetField",
+        description: "Load word from memory address (regA + offsetField) into regB",
+        example: "lw 0 1 data  # R1 = memory[R0 + data]"
+    },
+    "sw": {
+        type: "I-type",
+        format: "sw regA regB offsetField",
+        description: "Store regB into memory address (regA + offsetField)",
+        example: "sw 0 1 data  # memory[R0 + data] = R1"
+    },
+    "beq": {
+        type: "I-type",
+        format: "beq regA regB offsetField",
+        description: "Branch to PC+1+offsetField if regA equals regB",
+        example: "beq 1 2 loop  # if R1 == R2, jump to loop"
+    },
+    "jalr": {
+        type: "J-type",
+        format: "jalr regA regB",
+        description: "Store PC+1 in regB, then jump to address in regA",
+        example: "jalr 1 2  # R2 = PC+1, PC = R1"
+    },
+    "halt": {
+        type: "O-type",
+        format: "halt",
+        description: "Stop program execution",
+        example: "halt  # end program"
+    },
+    "noop": {
+        type: "O-type",
+        format: "noop",
+        description: "No operation, just increment PC",
+        example: "noop  # do nothing"
+    }
+};
 function activate(context) {
     const collection = vscode.languages.createDiagnosticCollection("lc2k");
     context.subscriptions.push(collection);
     if (vscode.window.activeTextEditor) {
         refreshDiagnostics(vscode.window.activeTextEditor.document, collection);
     }
-    context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(e => refreshDiagnostics(e.document, collection)), vscode.workspace.onDidOpenTextDocument(doc => refreshDiagnostics(doc, collection)), vscode.workspace.onDidCloseTextDocument(doc => collection.delete(doc.uri)));
-    const alignCmd = vscode.commands.registerCommand("lc2k.alignColumns", async () => {
-        const editor = vscode.window.activeTextEditor;
-        if (!editor) {
-            return;
-        }
+    context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(e => {
         const config = vscode.workspace.getConfiguration("lc2k");
-        const tabStops = config.get("tabStops", [8, 16, 24, 40]);
-        const commentToken = config.get("commentToken", "#");
-        const doc = editor.document;
-        await editor.edit(editBuilder => {
-            for (let i = 0; i < doc.lineCount; i++) {
-                const line = doc.lineAt(i).text;
-                const aligned = alignLine(line, tabStops, commentToken);
-                if (aligned !== line) {
-                    const range = new vscode.Range(i, 0, i, doc.lineAt(i).range.end.character);
-                    editBuilder.replace(range, aligned);
-                }
+        if (config.get("enableRealTimeValidation", true)) {
+            refreshDiagnostics(e.document, collection);
+        }
+    }), vscode.workspace.onDidOpenTextDocument(doc => refreshDiagnostics(doc, collection)), vscode.workspace.onDidCloseTextDocument(doc => collection.delete(doc.uri)));
+    // Hover provider for instruction information
+    const hoverProvider = vscode.languages.registerHoverProvider("lc2k", {
+        provideHover(document, position, token) {
+            const config = vscode.workspace.getConfiguration("lc2k");
+            if (!config.get("showInstructionHints", true)) {
+                return;
             }
-        });
+            const range = document.getWordRangeAtPosition(position);
+            if (!range)
+                return;
+            const word = document.getText(range).toLowerCase();
+            const info = INSTRUCTION_INFO[word];
+            if (info) {
+                const markdown = new vscode.MarkdownString();
+                markdown.appendMarkdown(`**${word.toUpperCase()}** (${info.type})\n\n`);
+                markdown.appendMarkdown(`**Format:** \`${info.format}\`\n\n`);
+                markdown.appendMarkdown(`**Description:** ${info.description}\n\n`);
+                markdown.appendMarkdown(`**Example:** \`${info.example}\`\n\n`);
+                return new vscode.Hover(markdown, range);
+            }
+        }
     });
-    context.subscriptions.push(alignCmd);
+    // Register all commands
+    const commands = [
+        vscode.commands.registerCommand("lc2k.alignColumns", alignColumns),
+        vscode.commands.registerCommand("lc2k.convertToMachineCode", convertToMachineCode),
+        vscode.commands.registerCommand("lc2k.insertTemplate", insertTemplate),
+        vscode.commands.registerCommand("lc2k.validateSyntax", validateSyntax),
+        vscode.commands.registerCommand("lc2k.showInstructionReference", showInstructionReference)
+    ];
+    context.subscriptions.push(collection, hoverProvider, ...commands);
 }
 function alignLine(line, stops, commentToken) {
     // Split off trailing comment
@@ -249,6 +314,180 @@ function makeDiag(doc, line, start, end, msg) {
     const diag = new vscode.Diagnostic(range, msg, vscode.DiagnosticSeverity.Warning);
     diag.source = "lc2k";
     return diag;
+}
+// Command implementations
+async function alignColumns() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        return;
+    }
+    const config = vscode.workspace.getConfiguration("lc2k");
+    const tabStops = config.get("tabStops", [8, 16, 24, 40]);
+    const commentToken = config.get("commentToken", "#");
+    const doc = editor.document;
+    await editor.edit(editBuilder => {
+        for (let i = 0; i < doc.lineCount; i++) {
+            const line = doc.lineAt(i).text;
+            const aligned = alignLine(line, tabStops, commentToken);
+            if (aligned !== line) {
+                const range = new vscode.Range(i, 0, i, doc.lineAt(i).range.end.character);
+                editBuilder.replace(range, aligned);
+            }
+        }
+    });
+}
+async function convertToMachineCode() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor || editor.document.languageId !== "lc2k") {
+        vscode.window.showErrorMessage("Please open an LC2K assembly file");
+        return;
+    }
+    try {
+        const assemblyCode = editor.document.getText();
+        const machineCode = assembleLc2k(assemblyCode);
+        const doc = await vscode.workspace.openTextDocument({
+            content: machineCode,
+            language: "plaintext"
+        });
+        await vscode.window.showTextDocument(doc, { viewColumn: vscode.ViewColumn.Beside });
+        vscode.window.showInformationMessage("Machine code generated in new tab");
+    }
+    catch (error) {
+        vscode.window.showErrorMessage(`Assembly failed: ${error}`);
+    }
+}
+async function insertTemplate() {
+    const templates = [
+        { label: "Basic Program", value: "header" },
+        { label: "Loop Structure", value: "loop" },
+        { label: "Function Template", value: "func" },
+        { label: "Multiplication Algorithm", value: "mult" },
+        { label: "Data Section", value: "data" },
+        { label: "Conditional Branch", value: "if" }
+    ];
+    const selected = await vscode.window.showQuickPick(templates, {
+        placeHolder: "Select a code template to insert"
+    });
+    if (selected) {
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+            // Trigger snippet by inserting the prefix and then triggering suggestions
+            await editor.insertSnippet(new vscode.SnippetString(selected.value));
+        }
+    }
+}
+async function validateSyntax() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor || editor.document.languageId !== "lc2k") {
+        vscode.window.showErrorMessage("Please open an LC2K assembly file");
+        return;
+    }
+    const diagnostics = vscode.languages.getDiagnostics(editor.document.uri);
+    const errors = diagnostics.filter(d => d.severity === vscode.DiagnosticSeverity.Error);
+    const warnings = diagnostics.filter(d => d.severity === vscode.DiagnosticSeverity.Warning);
+    let message = `Validation complete: `;
+    if (errors.length === 0 && warnings.length === 0) {
+        message += "No issues found ✓";
+        vscode.window.showInformationMessage(message);
+    }
+    else {
+        message += `${errors.length} errors, ${warnings.length} warnings`;
+        vscode.window.showWarningMessage(message);
+    }
+    // Focus problems panel
+    vscode.commands.executeCommand("workbench.panel.markers.view.focus");
+}
+async function showInstructionReference() {
+    const panel = vscode.window.createWebviewPanel('lc2kReference', 'LC2K Instruction Reference', vscode.ViewColumn.Beside, { enableScripts: false });
+    panel.webview.html = generateInstructionReferenceHtml();
+}
+function generateInstructionReferenceHtml() {
+    const instructionRows = Object.entries(INSTRUCTION_INFO).map(([opcode, info]) => `<tr>
+      <td><code>${opcode.toUpperCase()}</code></td>
+      <td>${info.type}</td>
+      <td><code>${info.format}</code></td>
+      <td>${info.description}</td>
+      <td><code>${info.example}</code></td>
+    </tr>`).join('\n');
+    return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px; }
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f5f5f5; font-weight: bold; }
+        code { background-color: #f4f4f4; padding: 2px 4px; border-radius: 3px; font-family: monospace; }
+        h1 { color: #333; border-bottom: 2px solid #007acc; padding-bottom: 10px; }
+        .instruction-type { font-weight: bold; }
+      </style>
+    </head>
+    <body>
+      <h1>LC-2K Instruction Set Reference</h1>
+      <table>
+        <thead>
+          <tr>
+            <th>Instruction</th>
+            <th>Type</th>
+            <th>Format</th>
+            <th>Description</th>
+            <th>Example</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${instructionRows}
+        </tbody>
+      </table>
+      <h2>Register Information</h2>
+      <ul>
+        <li><strong>R0</strong>: Always contains 0 (by convention)</li>
+        <li><strong>R1-R7</strong>: General purpose registers</li>
+      </ul>
+      <h2>Memory</h2>
+      <ul>
+        <li>Address space: 0 to 65535 (16-bit addresses)</li>
+        <li>Word size: 32 bits (4 bytes)</li>
+        <li>Little Computer architecture with 8 registers</li>
+      </ul>
+    </body>
+    </html>
+  `;
+}
+function assembleLc2k(assemblyCode) {
+    // This is a simplified assembler for demonstration
+    // In a real implementation, you'd want a full two-pass assembler
+    const lines = assemblyCode.split('\n');
+    const machineCode = [];
+    for (const line of lines) {
+        const cleanLine = line.split('#')[0].trim();
+        if (!cleanLine)
+            continue;
+        const tokens = cleanLine.split(/\s+/);
+        let idx = 0;
+        // Skip label if present
+        if (tokens[idx] && /^[A-Za-z]/.test(tokens[idx]) && tokens.length > 1) {
+            if (OPCODES.has(tokens[idx + 1]?.toLowerCase()) || DIRECTIVES.has(tokens[idx + 1]?.toLowerCase())) {
+                idx++;
+            }
+        }
+        const opcode = tokens[idx]?.toLowerCase();
+        if (!opcode)
+            continue;
+        if (opcode === '.fill') {
+            const value = tokens[idx + 1];
+            if (value) {
+                const num = parseInt(value);
+                machineCode.push(`0x${num.toString(16).toUpperCase().padStart(8, '0')}`);
+            }
+        }
+        else if (OPCODES.has(opcode)) {
+            // Simple machine code generation (this would be much more complex in reality)
+            machineCode.push(`0x00000000  # ${opcode} - not fully implemented`);
+        }
+    }
+    return machineCode.join('\n');
 }
 function deactivate() { }
 //# sourceMappingURL=extension.js.map

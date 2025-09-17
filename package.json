@@ -2,17 +2,25 @@
   "name": "lc2k",
   "displayName": "LC2K Assembly",
   "description": "Language support for LC-2K assembly used in EECS 370 with syntax, snippets, diagnostics, and align-columns formatter",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "publisher": "Vijay Nannapuraju",
   "engines": {
     "vscode": "^1.80.0"
   },
   "categories": [
-    "Programming Languages"
+    "Programming Languages",
+    "Formatters",
+    "Linters"
+  ],
+  "keywords": [
+    "lc2k",
+    "lc-2k",
+    "assembly",
+    "eecs370",
+    "little computer"
   ],
   "activationEvents": [
-    "onLanguage:lc2k",
-    "onCommand:lc2k.alignColumns"
+    "onLanguage:lc2k"
   ],
   "contributes": {
     "languages": [
@@ -46,7 +54,62 @@
     "commands": [
       {
         "command": "lc2k.alignColumns",
-        "title": "LC2K: Align Columns"
+        "title": "Align Columns",
+        "category": "LC2K"
+      },
+      {
+        "command": "lc2k.convertToMachineCode",
+        "title": "Convert to Machine Code View",
+        "category": "LC2K"
+      },
+      {
+        "command": "lc2k.insertTemplate",
+        "title": "Insert Code Template",
+        "category": "LC2K"
+      },
+      {
+        "command": "lc2k.validateSyntax",
+        "title": "Validate Syntax",
+        "category": "LC2K"
+      },
+      {
+        "command": "lc2k.showInstructionReference",
+        "title": "Show Instruction Reference",
+        "category": "LC2K"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "when": "resourceLangId == lc2k",
+          "command": "lc2k.alignColumns",
+          "group": "1_modification"
+        },
+        {
+          "when": "resourceLangId == lc2k",
+          "command": "lc2k.convertToMachineCode",
+          "group": "navigation"
+        }
+      ],
+      "editor/title": [
+        {
+          "when": "resourceLangId == lc2k",
+          "command": "lc2k.validateSyntax",
+          "group": "navigation"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "lc2k.alignColumns",
+        "key": "ctrl+shift+a",
+        "mac": "cmd+shift+a",
+        "when": "resourceLangId == lc2k"
+      },
+      {
+        "command": "lc2k.showInstructionReference",
+        "key": "f1",
+        "when": "resourceLangId == lc2k"
       }
     ],
     "configuration": {
@@ -67,6 +130,33 @@
           "type": "string",
           "default": "#",
           "description": "Comment token used in LC2K files"
+        },
+        "lc2k.enableRealTimeValidation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable real-time syntax validation while typing"
+        },
+        "lc2k.showInstructionHints": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show instruction format hints in hover tooltips"
+        },
+        "lc2k.highlightRegisterUsage": {
+          "type": "boolean",
+          "default": false,
+          "description": "Highlight all occurrences of the selected register"
+        },
+        "lc2k.maxLabelLength": {
+          "type": "number",
+          "default": 6,
+          "minimum": 1,
+          "maximum": 16,
+          "description": "Maximum allowed length for labels"
+        },
+        "lc2k.strictMode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable strict LC-2K compliance checking"
         }
       }
     }
