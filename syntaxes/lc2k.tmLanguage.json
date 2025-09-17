@@ -28,7 +28,7 @@
     "label": {
       "patterns": [
         {
-          "name": "entity.name.label.lc2k",
+          "name": "entity.name.label.definition.lc2k",
           "match": "^[ \\t]*([A-Za-z][A-Za-z0-9]{0,5})(?=\\s)"
         }
       ]
@@ -84,7 +84,7 @@
     "ident": {
       "patterns": [
         {
-          "name": "variable.other.symbol.lc2k",
+          "name": "variable.other.symbol.reference.lc2k",
           "match": "(?<=\\s|^)[A-Za-z][A-Za-z0-9]{0,5}(?=\\s|$)"
         }
       ]
