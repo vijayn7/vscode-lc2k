@@ -1,0 +1,66 @@
+{
+  "add": {
+    "prefix": "add",
+    "body": [
+      "${1:label}\\tadd\\t${2:regA}\\t${3:regB}\\t${4:destReg}\\t# ${5:dest = regA + regB}"
+    ]
+  },
+  "nor": {
+    "prefix": "nor",
+    "body": [
+      "${1:label}\\tnor\\t${2:regA}\\t${3:regB}\\t${4:destReg}\\t# dest = ~(regA | regB)"
+    ]
+  },
+  "lw": {
+    "prefix": "lw",
+    "body": [
+      "${1:label}\\tlw\\t${2:regA}\\t${3:regB}\\t${4:offsetOrLabel}\\t# regB = M[regA + off]"
+    ]
+  },
+  "sw": {
+    "prefix": "sw",
+    "body": [
+      "${1:label}\\tsw\\t${2:regA}\\t${3:regB}\\t${4:offsetOrLabel}\\t# M[regA + off] = regB"
+    ]
+  },
+  "beq": {
+    "prefix": "beq",
+    "body": [
+      "${1:label}\\tbeq\\t${2:regA}\\t${3:regB}\\t${4:offsetOrLabel}\\t# if regA == regB jump"
+    ]
+  },
+  "jalr": {
+    "prefix": "jalr",
+    "body": [
+      "${1:label}\\tjalr\\t${2:regA}\\t${3:regB}"
+    ]
+  },
+  "halt": {
+    "prefix": "halt",
+    "body": [
+      "${1:label}\\thalt"
+    ]
+  },
+  "noop": {
+    "prefix": "noop",
+    "body": [
+      "${1:label}\\tnoop"
+    ]
+  },
+  ".fill number": {
+    "prefix": ".fill",
+    "body": [
+      "${1:label}\\t.fill\\t${2:valueOrLabel}"
+    ]
+  },
+  "loop template": {
+    "prefix": "loop",
+    "body": [
+      "${1:start}\\tadd\\t0\\t0\\t${2:rTmp}\\t# rTmp = 0",
+      "\\tbeq\\t${3:rCondA}\\t${4:rCondB}\\t${5:end}",
+      "\\t# body",
+      "\\tbeq\\t0\\t0\\t${1:start}",
+      "${5:end}\\thalt"
+    ]
+  }
+}

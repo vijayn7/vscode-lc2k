@@ -1,0 +1,107 @@
+{
+  "scopeName": "source.lc2k",
+  "name": "LC2K",
+  "patterns": [
+    {
+      "include": "#label"
+    },
+    {
+      "include": "#directive"
+    },
+    {
+      "include": "#instruction"
+    },
+    {
+      "include": "#comment"
+    },
+    {
+      "include": "#number"
+    },
+    {
+      "include": "#register"
+    },
+    {
+      "include": "#ident"
+    }
+  ],
+  "repository": {
+    "label": {
+      "patterns": [
+        {
+          "name": "entity.name.label.lc2k",
+          "match": "^[ \\t]*([A-Za-z][A-Za-z0-9]{0,5})(?=\\s)"
+        }
+      ]
+    },
+    "directive": {
+      "patterns": [
+        {
+          "name": "keyword.other.directive.lc2k",
+          "match": "(?i)(?<=\\s|^)(\\.fill)(?=\\s|$)"
+        }
+      ]
+    },
+    "instruction": {
+      "patterns": [
+        {
+          "name": "keyword.instruction.rtype.lc2k",
+          "match": "(?i)(?<=\\s|^)(add|nor)(?=\\s|$)"
+        },
+        {
+          "name": "keyword.instruction.itype.lc2k",
+          "match": "(?i)(?<=\\s|^)(lw|sw|beq)(?=\\s|$)"
+        },
+        {
+          "name": "keyword.instruction.jtype.lc2k",
+          "match": "(?i)(?<=\\s|^)(jalr)(?=\\s|$)"
+        },
+        {
+          "name": "keyword.instruction.otype.lc2k",
+          "match": "(?i)(?<=\\s|^)(halt|noop)(?=\\s|$)"
+        }
+      ]
+    },
+    "register": {
+      "patterns": [
+        {
+          "name": "variable.language.register.lc2k",
+          "match": "(?<=\\s|^)([0-7])(?=\\s|$)"
+        }
+      ]
+    },
+    "number": {
+      "patterns": [
+        {
+          "name": "constant.numeric.hex.lc2k",
+          "match": "(?<=\\s|^)-?0x[0-9A-Fa-f]+(?=\\s|$)"
+        },
+        {
+          "name": "constant.numeric.decimal.lc2k",
+          "match": "(?<=\\s|^)-?[0-9]+(?=\\s|$)"
+        }
+      ]
+    },
+    "ident": {
+      "patterns": [
+        {
+          "name": "variable.other.symbol.lc2k",
+          "match": "(?<=\\s|^)[A-Za-z][A-Za-z0-9]{0,5}(?=\\s|$)"
+        }
+      ]
+    },
+    "comment": {
+      "patterns": [
+        {
+          "name": "comment.line.number-sign.lc2k",
+          "begin": "#",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.lc2k"
+            }
+          },
+          "end": "$"
+        }
+      ]
+    }
+  }
+}

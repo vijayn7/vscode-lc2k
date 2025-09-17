@@ -1,0 +1,86 @@
+{
+  "name": "lc2k",
+  "displayName": "LC2K Assembly",
+  "description": "Language support for LC-2K assembly used in EECS 370 with syntax, snippets, diagnostics, and align-columns formatter",
+  "version": "0.2.0",
+  "publisher": "your-name",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:lc2k",
+    "onCommand:lc2k.alignColumns"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "lc2k",
+        "aliases": [
+          "LC2K",
+          "LC-2K Assembly"
+        ],
+        "extensions": [
+          ".lc2k",
+          ".as",
+          ".s"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "lc2k",
+        "scopeName": "source.lc2k",
+        "path": "./syntaxes/lc2k.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "lc2k",
+        "path": "./snippets/lc2k.code-snippets"
+      }
+    ],
+    "commands": [
+      {
+        "command": "lc2k.alignColumns",
+        "title": "LC2K: Align Columns"
+      }
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "LC2K",
+      "properties": {
+        "lc2k.tabStops": {
+          "type": "array",
+          "default": [
+            8,
+            16,
+            24,
+            40
+          ],
+          "description": "Target character columns to align fields: label, opcode, fields, comment"
+        },
+        "lc2k.commentToken": {
+          "type": "string",
+          "default": "#",
+          "description": "Comment token used in LC2K files"
+        }
+      }
+    }
+  },
+  "main": "./dist/extension.js",
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p .",
+    "watch": "tsc -watch -p .",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "typescript": "^5.5.0",
+    "vsce": "^2.15.0"
+  }
+}
