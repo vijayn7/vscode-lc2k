@@ -39,7 +39,7 @@
     "directive": {
       "patterns": [
         {
-          "name": "keyword.other.directive.lc2k",
+          "name": "support.function.lc2k",
           "match": "(?i)(?<=\\s|^)(\\.fill)(?=\\s|$)"
         },
         {
@@ -51,20 +51,36 @@
     "instruction": {
       "patterns": [
         {
-          "name": "keyword.instruction.rtype.lc2k",
-          "match": "(?i)(?<=\\s|^)(add|nor)(?=\\s|$)"
+          "name": "support.function.builtin.lc2k",
+          "match": "(?i)(?<=\\s|^)(add)(?=\\s|$)"
         },
         {
-          "name": "keyword.instruction.itype.lc2k",
-          "match": "(?i)(?<=\\s|^)(lw|sw|beq)(?=\\s|$)"
+          "name": "keyword.operator.arithmetic.lc2k",
+          "match": "(?i)(?<=\\s|^)(nor)(?=\\s|$)"
         },
         {
-          "name": "keyword.instruction.jtype.lc2k",
+          "name": "entity.name.function.lc2k",
+          "match": "(?i)(?<=\\s|^)(lw)(?=\\s|$)"
+        },
+        {
+          "name": "variable.language.lc2k",
+          "match": "(?i)(?<=\\s|^)(sw)(?=\\s|$)"
+        },
+        {
+          "name": "keyword.control.conditional.lc2k",
+          "match": "(?i)(?<=\\s|^)(beq)(?=\\s|$)"
+        },
+        {
+          "name": "entity.name.tag.lc2k",
           "match": "(?i)(?<=\\s|^)(jalr)(?=\\s|$)"
         },
         {
-          "name": "keyword.instruction.otype.lc2k",
-          "match": "(?i)(?<=\\s|^)(halt|noop)(?=\\s|$)"
+          "name": "invalid.deprecated.lc2k",
+          "match": "(?i)(?<=\\s|^)(halt)(?=\\s|$)"
+        },
+        {
+          "name": "comment.block.documentation.lc2k",
+          "match": "(?i)(?<=\\s|^)(noop)(?=\\s|$)"
         }
       ]
     },

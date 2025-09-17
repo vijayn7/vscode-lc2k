@@ -5,8 +5,14 @@ A comprehensive Visual Studio Code extension providing rich language support for
 ## 🚀 Features
 
 ### Syntax Highlighting
-- **Comprehensive highlighting** for all LC-2K instructions, directives, and data types
-- **Smart label recognition** - different colors for label definitions vs references
+- **Comprehensive highlighting** for all LC-2K instructions, directives, and data types- **Instruction type differentiation** using semantic token types:
+  - **R-Type**: `ADD`, `NOR` - colored as control flow keywords
+  - **I-Type**: `LW` (storage), `SW` (modifier), `BEQ` (flow control)
+  - **J-Type**: `JALR` - colored as import/call keywords
+  - **O-Type**: `HALT` (exception), `NOOP` (other keywords)
+- **Distinctive `.fill` directive** - colored as support functions
+- **Works with any VS Code theme** - uses standard token types for consistent coloring
+- **Standard label highlighting** - consistent styling for label definitions
 - **Number format support** - decimal, hexadecimal (`0x`), and binary (`0b`) literals
 - **Comment support** - line comments (`#`) and block comments (`/* */`)
 - **Register highlighting** - visual distinction for registers 0-7

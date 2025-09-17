@@ -2,7 +2,7 @@
   "name": "lc2k",
   "displayName": "LC2K Assembly",
   "description": "Language support for LC-2K assembly used in EECS 370 with syntax, snippets, diagnostics, and align-columns formatter",
-  "version": "0.3.0",
+  "version": "0.6.0",
   "publisher": "Vijay Nannapuraju",
   "engines": {
     "vscode": "^1.80.0"
