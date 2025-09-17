@@ -100,7 +100,7 @@ function refreshDiagnostics(doc: vscode.TextDocument, collection: vscode.Diagnos
   }
 
   // Second pass - validate opcodes, registers, .fill usage, beq label offsets, ordering of .fill
-  let seenFill = False;
+  let seenFill = false;
   for (let i = 0; i < doc.lineCount; i++) {
     const raw = doc.lineAt(i).text;
     const line = stripComment(raw);
@@ -119,44 +119,48 @@ function refreshDiagnostics(doc: vscode.TextDocument, collection: vscode.Diagnos
     const op = tokens[idx]?.toLowerCase();
     if (!op) continue;
 
-    if (!(OPCODES.has(op) || DIRECTIVES.has(op))) {
+  if (!(OPCODES.has(op) || DIRECTIVES.has(op))) {
       const start = raw.indexOf(tokens[idx]);
       diags.push(makeDiag(doc, i, start, start + tokens[idx].length, `Unknown opcode or directive: ${tokens[idx]}`));
       continue;
     }
 
-    if (op === ".fill"):
-      if (!seenFill:
-        seenFill = True
-        seenFillsAfterInstr.firstFill = i
-      else:
-        # still seenFill True
-        pass
-      # validate argument exists
-      if (idx + 1 >= tokens.length):
-        const start = raw.indexOf(op)
-        diags.push(makeDiag(doc, i, start, start + op.length, ".fill requires an argument"))
-      else:
-        const arg = tokens[idx+1]
-        if (!isNumber(arg) and not /^[A-Za-z][A-Za-z0-9]{0,5}$/.test(arg)):
-          const pos = raw.indexOf(arg)
-          diags.push(makeDiag(doc, i, pos, pos + arg.length, "Invalid .fill argument. Use number or defined label"))
-      continue
+    if (op === ".fill") {
+      if (!seenFill) {
+        seenFill = true;
+        seenFillsAfterInstr.firstFill = i;
+      } else {
+        // still seenFill true
+      }
+      // validate argument exists
+      if (idx + 1 >= tokens.length) {
+        const start = raw.indexOf(op);
+        diags.push(makeDiag(doc, i, start, start + op.length, ".fill requires an argument"));
+      } else {
+        const arg = tokens[idx+1];
+        if (!isNumber(arg) && !/^[A-Za-z][A-Za-z0-9]{0,5}$/.test(arg)) {
+          const pos = raw.indexOf(arg);
+          diags.push(makeDiag(doc, i, pos, pos + arg.length, "Invalid .fill argument. Use number or defined label"));
+        }
+      }
+      continue;
+    }
 
-    # If we get here, it is an instruction
-    if (seenFill):
-      seenFillsAfterInstr.laterInstrs.push(i)
+    // If we get here, it is an instruction
+    if (seenFill) {
+      seenFillsAfterInstr.laterInstrs.push(i);
+    }
 
     // Validate operand counts roughly
-    const needRegs = (op === "add" or op === "nor") ? 3
-                    : (op === "lw" or op === "sw" or op === "beq") ? 3
-                    : (op === "jalr") ? 2
-                    : 0;
+  const needRegs = (op === "add" || op === "nor") ? 3
+          : (op === "lw" || op === "sw" || op === "beq") ? 3
+          : (op === "jalr") ? 2
+          : 0;
     const have = tokens.length - (idx + 1);
-    if (have < needRegs):
-      const start = raw.indexOf(op)
+    if (have < needRegs) {
+      const start = raw.indexOf(op);
       diags.push(makeDiag(doc, i, start, start + op.length, `Missing operands for ${op}`));
-    else:
+    } else {
       // Validate registers and immediates
       const ops = tokens.slice(idx+1);
       function isReg(t: string): boolean { return /^[0-7]$/.test(t); }
